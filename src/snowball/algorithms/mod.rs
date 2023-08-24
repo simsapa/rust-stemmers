@@ -10,6 +10,7 @@ pub mod greek;
 pub mod hungarian;
 pub mod italian;
 pub mod norwegian;
+pub mod pali;
 pub mod portuguese;
 pub mod romanian;
 pub mod russian;

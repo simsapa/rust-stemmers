@@ -1,0 +1,230 @@
+/*
+Pāli Stemmer
+
+The romanized Pāli alphabet:
+
+a ā i ī u ū e o ṁ ṃ k kh g gh ṅ c ch j jh ñ ṭ ṭh ḍ ḍh ṇ t th d dh n p ph b bh m y r l ḷ v s h
+
+Sanskrit letters may occur:
+
+ṛ ṣ ś
+
+In dictionary texts, √ is used to mark roots.
+*/
+
+routines (
+    mark_regions
+    R1
+    declensions
+)
+
+externals ( stem )
+
+integers ( p1 )
+groupings ( vowel consonant )
+
+stringescapes {}
+
+/* special characters */
+
+stringdef aa  '{U+0101}' // ā
+stringdef ii  '{U+012B}' // ī
+stringdef uu  '{U+016B}' // ū
+stringdef m'  '{U+1E41}' // ṁ
+stringdef m.  '{U+1E43}' // ṃ
+stringdef n'  '{U+1E45}' // ṅ
+stringdef n~  '{U+00F1}' // ñ
+stringdef t.  '{U+1E6D}' // ṭ
+stringdef d.  '{U+1E0D}' // ḍ
+stringdef n.  '{U+1E47}' // ṇ
+stringdef l.  '{U+1E37}' // ḷ
+stringdef r.  '{U+1E5B}' // ṛ
+stringdef s.  '{U+1E63}' // ṣ
+stringdef s'  '{U+015B}' // ś
+stringdef vr  '{U+221A}' // √
+
+define vowel 'a{aa}i{ii}u{uu}eo'
+
+define consonant '{m'}{m.}kg{n'}cj{n~}{t.}{d.}{n.}tdnpbmyrl{l.}vsh{r.}{s.}{s'}{vr}'
+
+define mark_regions as (
+
+    $p1 = limit
+
+    (vowel goto non-vowel
+        among('kh' 'gh' 'ch' 'jh' '{t.}h' '{d.}h' 'th' 'dh' 'ph' 'bh') or next
+        setmark p1)
+    or
+
+    (non-vowel gopast vowel setmark p1)
+)
+
+backwardmode (
+
+    define R1 as $p1 <= cursor
+
+    // Remove declension endings for masc., neut., fem. nouns.
+    // Start with the longer endings to avoid ambiguity.
+    // Some endings are present in other noun types, and remain ambiguous.
+    // bhūmīnaṁ → bhūmi is OK, but kumārīnaṁ → kumāri should be kumārī.
+    // The result (kumāri) is nonetheless suitable for dictionary lookup.
+
+    define declensions as (
+        [substring] R1 among (
+            // masc.-a 5 chars
+            'asmi{m'}'
+            'asmi{m.}'
+            (<- 'a')
+
+            // masc.-i 5 chars
+            'ismi{m'}'
+            'ismi{m.}'
+            (<- 'i')
+
+            // masc.-u 5 chars
+            'usmi{m'}'
+            'usmi{m.}'
+            (<- 'u')
+
+            // masc.-a 4 chars
+            '{aa}na{m'}'
+            '{aa}na{m.}'
+            'amh{aa}'
+            'amhi'
+            'asm{aa}'
+            'assa'
+            (<- 'a')
+
+            // fem.-ā 4 chars
+            '{aa}ya{m'}'
+            '{aa}ya{m.}'
+            '{aa}yo'
+            (<- '{aa}')
+
+            // masc.-i 4 chars
+            '{ii}na{m'}'
+            '{ii}na{m.}'
+            'imh{aa}'
+            'imhi'
+            'ism{aa}'
+            'issa'
+            (<- 'i')
+
+            // fem.-i 4 chars
+            'iya{m'}'
+            'iya{m.}'
+            (<- 'i')
+
+            // masc.-ī 4 chars
+            'ina{m'}'
+            'ina{m.}'
+            (<- '{ii}')
+
+            // masc.-u 4 chars
+            'umh{aa}'
+            'umhi'
+            'usm{aa}'
+            'ussa'
+            '{uu}na{m'}'
+            '{uu}na{m.}'
+            (<- 'u')
+
+            // fem.-u 4 chars
+            'uya{m'}'
+            'uya{m.}'
+            (<- 'u')
+
+            // masc.-a 3 chars
+            '{aa}ya'
+            'ehi'
+            'ena'
+            'esu'
+            (<- 'a')
+
+            // fem.-ā 3 chars
+            '{aa}hi'
+            '{aa}su'
+            (<- '{aa}')
+
+            // neut.-a 3 chars
+            '{aa}ni'
+            (<- 'a')
+
+            // masc.-i 3 chars
+            'ayo'
+            '{ii}hi'
+            '{ii}su'
+            'in{aa}'
+            'ino'
+            (<- 'i')
+
+            // neut.-i 3 chars
+            '{ii}ni'
+            'ini'
+            'isu'
+            (<- 'i')
+
+            // fem.-i 3 chars
+            'iy{aa}'
+            'iyo'
+            (<- 'i')
+
+            // masc.-u 3 chars
+            'ave'
+            'avo'
+            'un{aa}'
+            'uno'
+            '{uu}hi'
+            '{uu}su'
+            (<- 'u')
+
+            // neut.-u 3 chars
+            '{uu}ni'
+            (<- 'u')
+
+            // fem.-u 3 chars
+            'usu'
+            'uy{aa}'
+            'uyo'
+            (<- 'u')
+
+            // masc.-a 2 chars
+            'a{m'}'
+            'a{m.}'
+            (<- 'a')
+
+            // masc.-i 2 chars
+            'i{m'}'
+            'i{m.}'
+            (<- 'i')
+
+            // masc.-u 2 chars
+            'u{m'}'
+            'u{m.}'
+            (<- 'u')
+
+            // masc.-a 1 chars
+            'o'
+            '{aa}'
+            'e'
+            (<- 'a')
+
+            // masc.-i 1 chars
+            '{ii}'
+            (<- 'i')
+
+            // masc.-u 1 chars
+            '{uu}'
+            (<- 'u')
+
+        )
+    )
+
+)
+
+define stem as (
+    do mark_regions
+    backwards (
+        do declensions
+    )
+)
